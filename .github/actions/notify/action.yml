@@ -1,0 +1,50 @@
+name: 'Telegram Notification'
+description: 'Sends a message to Telegram'
+
+inputs:
+  status:
+    description: 'Status of the job'
+    required: true
+  token:
+    description: 'Telegram Bot Token'
+    required: true
+  to:
+    description: 'Telegram Chat ID'
+    required: true
+  topic_id:
+    description: 'Telegram Topic ID'
+    required: false
+    default: ''
+
+runs:
+  using: "composite"
+  steps:
+    - name: Send Message
+      shell: bash
+      env:
+        STATUS: ${{ inputs.status }}
+        TOKEN: ${{ inputs.token }}
+        TO: ${{ inputs.to }}
+        TOPIC: ${{ inputs.topic_id }}
+        ACTOR: ${{ github.actor }}
+        COMMIT: ${{ github.event.commits[0].message }}
+        REPO: ${{ github.repository }}
+        RUN_ID: ${{ github.run_id }}
+        RUN_NUM: ${{ github.run_number }}
+      run: |
+        if [ "$STATUS" == "success" ]; then
+           HEADER="✅ *Деплой Kittygram* [#$RUN_NUM](https://github.com/$REPO/actions/runs/$RUN_ID) *успешно завершен!*"
+        else
+           HEADER="❌ *Деплой Kittygram* [#$RUN_NUM](https://github.com/$REPO/actions/runs/$RUN_ID) *упал с ошибкой!*"
+        fi
+
+        MESSAGE="$HEADER
+        
+        👤 *Автор:* $ACTOR
+        📝 *Коммит:* $COMMIT"
+
+        curl -s -X POST "https://api.telegram.org/bot$TOKEN/sendMessage" \
+          -d chat_id=$TO \
+          -d message_thread_id=$TOPIC \
+          -d parse_mode=Markdown \
+          --data-urlencode "text=$MESSAGE"
