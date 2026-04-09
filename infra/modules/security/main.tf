@@ -13,7 +13,6 @@ locals {
   all_ips      = ["0.0.0.0/0"]
   ssh_port     = 22
   http_port    = 80
-  https_port   = 443
 }
 
 resource "yandex_vpc_security_group" "this" {
@@ -40,10 +39,4 @@ resource "yandex_vpc_security_group" "this" {
     v4_cidr_blocks = local.all_ips
   }
 
-  ingress {
-    description    = "Allow HTTPS access"
-    protocol       = local.tcp_protocol
-    port           = local.https_port
-    v4_cidr_blocks = local.all_ips
-  }
 }
