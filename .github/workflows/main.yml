@@ -191,6 +191,10 @@ jobs:
         run: |
           echo "vm_ip=$(terraform output -raw vm_public_ip)" >> $GITHUB_OUTPUT
           echo "vm_username=$(terraform output -raw vm_username)" >> $GITHUB_OUTPUT
+      
+      # временная затычка
+      - name: Sleep for 2 minutes to let cloud init finish
+        run: sleep 120
 
   deploy:
     name: Deploy to Server

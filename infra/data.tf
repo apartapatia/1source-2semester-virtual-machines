@@ -1,3 +1,5 @@
+# кажется тут оверинжиниринг но хотелось посмотреть как работает
+
 data "yandex_lockbox_secret_version" "my_secret" {
   secret_id = "e6qigfb45t7qhf9ucv65"
 }
