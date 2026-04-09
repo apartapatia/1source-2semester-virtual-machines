@@ -4,3 +4,4 @@ deploy/ansible/inventory/hosts.yml
 
 *.tfvars
 .terraform/
+.terraform*

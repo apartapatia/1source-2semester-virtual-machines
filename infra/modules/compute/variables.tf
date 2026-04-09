@@ -1,52 +1,52 @@
 variable "vm_name" {
-  type        = string
+  type = string
 }
 
 variable "zone" {
-  type        = string
+  type = string
 }
 
 variable "platform_id" {
-  type        = string
+  type = string
 }
 
 variable "cores" {
-  type        = number
+  type = number
 }
 
 variable "memory" {
-  type        = number
+  type = number
 }
 
 variable "core_fraction" {
-  type        = number
+  type = number
 }
 
 variable "disk_type" {
-  type        = string
+  type = string
 }
 
 variable "disk_size" {
-  type        = number
+  type = number
 }
 
 variable "image_family" {
-  type        = string
+  type = string
 }
 
 variable "subnet_id" {
-  type        = string
+  type = string
 }
 
 variable "nat" {
-  type        = bool
+  type = bool
 }
 
 variable "sg_id" {
-  type        = string
+  type = string
 }
 
 variable "ssh_key" {
-  type        = string
-  sensitive   = true
+  type      = string
+  sensitive = true
 }

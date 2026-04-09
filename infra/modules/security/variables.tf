@@ -1,11 +1,11 @@
 variable "network_id" {
-  type        = string
+  type = string
 }
 
 variable "vpc_name" {
-  type        = string
+  type = string
 }
 
 variable "trusted_ip_for_ssh" {
-  type        = string
+  type = string
 }
