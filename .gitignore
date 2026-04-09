@@ -1,5 +1,4 @@
 .DS_Store
-deploy/ansible/inventory/hosts.yml
 .env
 
 *.tfvars
