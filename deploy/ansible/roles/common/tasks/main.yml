@@ -1,4 +1,8 @@
 ---
+- name: Ensure cloud-init was finished
+  ansible.builtin.raw: cloud-init status --wait
+  changed_when: false
+      
 - name: Ensure app directory exists
   ansible.builtin.file:
     path: "{{ app_dir }}"
