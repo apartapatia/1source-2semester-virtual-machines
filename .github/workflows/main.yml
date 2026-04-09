@@ -164,6 +164,7 @@ jobs:
       YC_SERVICE_ACCOUNT_KEY_FILE: ${{ secrets.YC_SERVICE_ACCOUNT_KEY_FILE }}
     outputs:
       vm_ip: ${{ steps.extract_ip.outputs.vm_ip }}
+      vm_username: ${{ steps.extract_ip.outputs.vm_username }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -185,9 +186,11 @@ jobs:
         id: apply
         run: terraform apply -no-color tfplan
 
-      - name: Extract VM Public IP
+      - name: Extract VM outputs
         id: extract_ip
-        run: echo "vm_ip=$(terraform output -raw vm_public_ip)" >> $GITHUB_OUTPUT
+        run: |
+          echo "vm_ip=$(terraform output -raw vm_public_ip)" >> $GITHUB_OUTPUT
+          echo "vm_username=$(terraform output -raw vm_username)" >> $GITHUB_OUTPUT
 
   deploy:
     name: Deploy to Server
@@ -212,7 +215,7 @@ jobs:
         run: |
           ansible-playbook -i deploy/ansible/inventory/hosts.yml \
             -e "target_ip=${{ needs.terraform_apply.outputs.vm_ip }}" \
-            -e "target_user=${{ secrets.SSH_USER }}" \
+            -e "target_user=${{ needs.terraform_apply.outputs.vm_username }}" \
             deploy/ansible/provision.yml
 
       - name: Run Deploy Playbook
@@ -224,7 +227,7 @@ jobs:
         run: |
           ansible-playbook -i deploy/ansible/inventory/hosts.yml \
             -e "target_ip=${{ needs.terraform_apply.outputs.vm_ip }}" \
-            -e "target_user=${{ secrets.SSH_USER }}" \
+            -e "target_user=${{ needs.terraform_apply.outputs.vm_username }}" \
             deploy/ansible/deploy.yml
 
   autotests:
