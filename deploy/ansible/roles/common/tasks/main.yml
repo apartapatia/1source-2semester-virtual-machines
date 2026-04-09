@@ -21,7 +21,10 @@
     
 - name: Install pip for Python 3
   ansible.builtin.apt:
-    name: python3-pip
+    name: 
+      - python3-pip
+      - python3-packaging
+      - python3-setuptools
     state: present
     
 - name: Install Docker Python dependencies for Ansible
