@@ -27,7 +27,7 @@ runs:
         TO: ${{ inputs.to }}
         TOPIC: ${{ inputs.topic_id }}
         ACTOR: ${{ github.actor }}
-        COMMIT: ${{ github.event.commits[0].message }}
+        COMMIT: ${{ github.event.head_commit.message || 'Manual trigger' }}
         REPO: ${{ github.repository }}
         RUN_ID: ${{ github.run_id }}
         RUN_NUM: ${{ github.run_number }}
