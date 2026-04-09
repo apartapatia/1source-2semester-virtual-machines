@@ -27,24 +27,39 @@ runs:
         TO: ${{ inputs.to }}
         TOPIC: ${{ inputs.topic_id }}
         ACTOR: ${{ github.actor }}
-        COMMIT: ${{ github.event.head_commit.message || 'Manual trigger' }}
+        COMMIT_MSG: ${{ github.event.head_commit.message || 'Manual trigger' }}
+        COMMIT_HASH: ${{ github.sha }}
+        BRANCH: ${{ github.ref_name }}
         REPO: ${{ github.repository }}
         RUN_ID: ${{ github.run_id }}
         RUN_NUM: ${{ github.run_number }}
       run: |
+        SHORT_HASH="${COMMIT_HASH:0:7}"
+        
         if [ "$STATUS" == "success" ]; then
-           HEADER="✅ *Деплой Kittygram* [#$RUN_NUM](https://github.com/$REPO/actions/runs/$RUN_ID) *успешно завершен!*"
+           HEADER="✅ <b>Деплой Kittygram успешно завершен!</b>"
+           STATUS_TEXT="🟢 Успешно"
         else
-           HEADER="❌ *Деплой Kittygram* [#$RUN_NUM](https://github.com/$REPO/actions/runs/$RUN_ID) *упал с ошибкой!*"
+           HEADER="❌ <b>Ошибка деплоя Kittygram!</b>"
+           STATUS_TEXT="🔴 Провалено"
         fi
 
-        MESSAGE="$HEADER
-        
-        👤 *Автор:* $ACTOR
-        📝 *Коммит:* $COMMIT"
+        SAFE_COMMIT_MSG=$(echo "$COMMIT_MSG" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/"/\&quot;/g')
+
+        MESSAGE="$HEADER%0A%0A"
+        MESSAGE+="<b>Статус:</b> $STATUS_TEXT%0A"
+        MESSAGE+="<b>Запуск:</b> #$RUN_NUM%0A"
+        MESSAGE+="<b>Ветка:</b> <code>$BRANCH</code>%0A"
+        MESSAGE+="<b>Коммит:</b> <code>$SHORT_HASH</code>%0A"
+        MESSAGE+="<b>Автор:</b> $ACTOR%0A"
+        MESSAGE+="<b>Сообщение:</b> <i>$SAFE_COMMIT_MSG</i>"
+
+        KEYBOARD="{\"inline_keyboard\":[[{\"text\":\"🐙 Открыть коммит\",\"url\":\"https://github.com/$REPO/commit/$COMMIT_HASH\"},{\"text\":\"🚀 Логи Action\",\"url\":\"https://github.com/$REPO/actions/runs/$RUN_ID\"}]]}"
 
         curl -s -X POST "https://api.telegram.org/bot$TOKEN/sendMessage" \
           -d chat_id=$TO \
           -d message_thread_id=$TOPIC \
-          -d parse_mode=Markdown \
+          -d parse_mode=HTML \
+          -d disable_web_page_preview=true \
+          -d reply_markup="$KEYBOARD" \
           --data-urlencode "text=$MESSAGE"
