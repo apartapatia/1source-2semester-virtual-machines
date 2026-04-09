@@ -1,6 +1,6 @@
 variable "vpc_name" {
-  type        = string
-  default     = "infra-network"
+  type    = string
+  default = "infra-network"
 }
 
 variable "net_cidr" {
@@ -17,21 +17,21 @@ variable "net_cidr" {
 }
 
 variable "vm_name" {
-  type        = string
-  default     = "vm-kittygram"
+  type    = string
+  default = "vm-kittygram"
 }
 
 variable "cloud_id" {
-  type        = string
+  type = string
 }
 
 variable "folder_id" {
-  type        = string
+  type = string
 }
 
 variable "zone" {
-  type        = string
-  default     = "ru-central1-a"
+  type    = string
+  default = "ru-central1-a"
 
   validation {
     condition     = contains(["ru-central1-a", "ru-central1-b", "ru-central1-d"], var.zone)
@@ -40,18 +40,18 @@ variable "zone" {
 }
 
 variable "image_family" {
-  type        = string
-  default     = "ubuntu-2204-lts"
+  type    = string
+  default = "ubuntu-2404-lts"
 }
 
 variable "platform_id" {
-  type        = string
-  default     = "standard-v3"
+  type    = string
+  default = "standard-v3"
 }
 
 variable "cores" {
-  type        = number
-  default     = 2
+  type    = number
+  default = 2
   validation {
     condition     = var.cores >= 2
     error_message = "Number of cores must be at least 2."
@@ -69,13 +69,13 @@ variable "memory" {
 }
 
 variable "disk_type" {
-  type        = string
-  default     = "network-hdd"
+  type    = string
+  default = "network-hdd"
 }
 
 variable "disk_size" {
-  type        = number
-  default     = 20
+  type    = number
+  default = 20
   validation {
     condition     = var.disk_size >= 10
     error_message = "Disk size must be at least 10 GB."
@@ -83,8 +83,8 @@ variable "disk_size" {
 }
 
 variable "nat" {
-  type        = bool
-  default     = true
+  type    = bool
+  default = true
 }
 
 variable "core_fraction" {
