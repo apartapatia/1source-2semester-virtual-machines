@@ -273,3 +273,4 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           to: ${{ secrets.TELEGRAM_TO }}
           topic_id: ${{ secrets.TELEGRAM_TOPIC_ID }}
+          site_url: http://${{ needs.terraform_apply.outputs.vm_ip }}
