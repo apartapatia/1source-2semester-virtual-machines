@@ -258,7 +258,7 @@ jobs:
     name: Telegram Notification
     runs-on: ubuntu-latest
     if: always()
-    needs: [deploy, autotests]
+    needs: [lint, frontend_tests, build_and_push, terraform_plan, terraform_apply, deploy, autotests]
     steps:
       - name: Checkout actions
         uses: actions/checkout@v4
@@ -266,7 +266,7 @@ jobs:
       - name: Send Notification
         uses: ./.github/actions/notify
         with:
-          status: ${{ contains(needs.*.result, 'failure') && 'failure' || 'success' }}
+          status: ${{ (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) && 'failure' || 'success' }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
           to: ${{ secrets.TELEGRAM_TO }}
           topic_id: ${{ secrets.TELEGRAM_TOPIC_ID }}
