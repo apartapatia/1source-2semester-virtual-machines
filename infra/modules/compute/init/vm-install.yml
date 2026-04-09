@@ -16,3 +16,4 @@ packages:
 runcmd:
   - [ usermod, -aG, docker, "${USERNAME}" ]
   - [ python3, -m, venv, /opt/venv ]
+  - [ sh, -c, "/opt/venv/bin/pip install packaging docker requests" ]
