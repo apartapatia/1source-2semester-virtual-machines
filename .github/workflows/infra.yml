@@ -1,0 +1,136 @@
+name: Kittygram Infrastructure CI/CD
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Select the Terraform action'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  terraform_plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra
+    env:
+      TF_ACTION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.action || 'apply' }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_VAR_cloud_id: ${{ secrets.TF_VAR_cloud_id }}
+      TF_VAR_folder_id: ${{ secrets.TF_VAR_folder_id }}
+      YC_SERVICE_ACCOUNT_KEY_FILE: ${{ secrets.YC_SERVICE_ACCOUNT_KEY_FILE }}
+    outputs:
+      execution_action: ${{ steps.plan.outputs.execution_action }}
+      plan_file: ${{ steps.plan.outputs.plan_file }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Format
+        id: fmt
+        run: terraform fmt -check
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          case "${{ env.TF_ACTION }}" in
+            plan)
+              terraform plan -no-color
+              echo "execution_action=plan" >> "$GITHUB_OUTPUT"
+              echo "plan_file=" >> "$GITHUB_OUTPUT"
+              ;;
+            apply)
+              terraform plan -out=tfplan -no-color
+              echo "execution_action=apply" >> "$GITHUB_OUTPUT"
+              echo "plan_file=tfplan" >> "$GITHUB_OUTPUT"
+              ;;
+            destroy)
+              terraform plan -destroy -out=tfplan -no-color
+              echo "execution_action=destroy" >> "$GITHUB_OUTPUT"
+              echo "plan_file=tfplan" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "Unsupported action: ${{ env.TF_ACTION }}" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Upload Terraform Plan Artifact
+        if: steps.plan.outputs.plan_file != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan
+          path: infra/tfplan
+
+  terraform_execute:
+    name: Terraform Execute
+    runs-on: ubuntu-latest
+    needs: terraform_plan
+    if: needs.terraform_plan.outputs.execution_action == 'apply' || needs.terraform_plan.outputs.execution_action == 'destroy'
+    environment: production
+    defaults:
+      run:
+        working-directory: infra
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_VAR_cloud_id: ${{ secrets.TF_VAR_cloud_id }}
+      TF_VAR_folder_id: ${{ secrets.TF_VAR_folder_id }}
+      YC_SERVICE_ACCOUNT_KEY_FILE: ${{ secrets.YC_SERVICE_ACCOUNT_KEY_FILE }}
+    outputs:
+      vm_ip: ${{ steps.extract_ip.outputs.vm_ip }}
+      vm_username: ${{ steps.extract_ip.outputs.vm_username }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Download Terraform Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan
+          path: infra
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
+      - name: Terraform Execute Planned Changes
+        id: apply
+        run: terraform apply -no-color tfplan
+
+      - name: Extract VM outputs
+        if: needs.terraform_plan.outputs.execution_action == 'apply'
+        id: extract_ip
+        run: |
+          echo "vm_ip=$(terraform output -raw vm_public_ip)" >> $GITHUB_OUTPUT
+          echo "vm_username=$(terraform output -raw vm_username)" >> $GITHUB_OUTPUT
+
+      - name: Sleep for 2 minutes to let cloud init finish
+        if: needs.terraform_plan.outputs.execution_action == 'apply'
+        run: sleep 120
