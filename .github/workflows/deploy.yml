@@ -1,4 +1,4 @@
-name: Kittygram Deploy CI/CD
+name: Kittygram Deploy
 
 on:
   push:
@@ -109,6 +109,7 @@ jobs:
   get_infrastructure_state:
     name: Get Infrastructure State
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     outputs:
       vm_ip: ${{ steps.extract_ip.outputs.vm_ip }}
       vm_username: ${{ steps.extract_ip.outputs.vm_username }}
@@ -207,6 +208,21 @@ jobs:
       - name: Run tests
         run: pytest -c tests.yml tests
 
+      - name: Output tests.yml to Summary
+        if: always()
+        run: |
+          echo "### Generated tests.yml" >> $GITHUB_STEP_SUMMARY
+          echo '```yaml' >> $GITHUB_STEP_SUMMARY
+          cat tests.yml >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload tests.yml Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-yml-config
+          path: tests.yml
+
   notify:
     name: Telegram Notification
     runs-on: ubuntu-latest
@@ -223,4 +239,4 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           to: ${{ secrets.TELEGRAM_TO }}
           topic_id: ${{ secrets.TELEGRAM_TOPIC_ID }}
-          site_url: http://${{ needs.get_infrastructure_state.outputs.vm_ip }}
+          site_url: ${{ needs.get_infrastructure_state.outputs.vm_ip && format('http://{0}', needs.get_infrastructure_state.outputs.vm_ip) || '' }}

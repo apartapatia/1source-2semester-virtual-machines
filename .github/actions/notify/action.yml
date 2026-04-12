@@ -60,16 +60,16 @@ runs:
         MESSAGE+="<b>Сообщение:</b> <i>$SAFE_COMMIT_MSG</i>"
 
         BUTTONS="[]"
-        if [ -n "$SITE_URL" ] && [ "$STATUS" == "success" ]; then
+        if [ -n "$SITE_URL" ] && [ "$SITE_URL" != "http://" ] && [ "$SITE_URL" != "https://" ] && [ "$STATUS" == "success" ]; then
           BUTTONS="[{\"text\":\"🐱 Открыть Kittygram\",\"url\":\"$SITE_URL\"}]"
         fi
 
         KEYBOARD="{\"inline_keyboard\":[$BUTTONS]}"
 
         curl -s -X POST "https://api.telegram.org/bot$TOKEN/sendMessage" \
-          -d chat_id=$TO \
-          -d message_thread_id=$TOPIC \
+          --data-urlencode "chat_id=$TO" \
+          --data-urlencode "message_thread_id=$TOPIC" \
           -d parse_mode=HTML \
           -d disable_web_page_preview=true \
-          -d reply_markup="$KEYBOARD" \
+          -d "reply_markup=$KEYBOARD" \
           --data-urlencode "text=$MESSAGE"
